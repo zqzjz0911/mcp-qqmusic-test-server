@@ -42,5 +42,4 @@ async def search_music(keyword: str, page: int = 1, num: int = 20):
 
 
 if __name__ == "__main__":
-    # print(asyncio.run(search_music("周杰伦")))
     mcp.run(transport='stdio')
