@@ -1,6 +1,6 @@
 import asyncio
 from qqmusic_api import search, singer
-from qqmusic_api.search import SearchType
+from qqmusic_api.search import SearchType, complete
 from mcp.server.fastmcp import FastMCP
 import json
 
@@ -46,25 +46,27 @@ async def search_music(keyword: str, page: int = 1, num: int = 20):
 async def search_songs_by_singer(singer_name: str, page: int = 1, num: int = 20, order: int = 1):
     """
     Search for songs by singer name
-    
+
     Args:
         singer_name: Singer name to search for
         page: Page number for pagination (default: 1)
         num: Maximum number of results to return (default: 20)
         order: Sort order (0: newest, 1: most popular) (default: 1)
-        
+
     Returns:
         List of songs by the specified singer
     """
-    singer_result = await search.search_by_type(keyword=singer_name, search_type=SearchType.SINGER, num=1)
-    
-    if not singer_result or len(singer_result) == 0:
-        return []
-    
-    singer_mid = singer_result[0].get("singerMID") or singer_result[0].get("mid")
+    singer_result = await complete(singer_name)
+
+    singer_mid = None
+    for item in singer_result.get("vec_direct_items", []):
+        if item.get("restype") == "singer":
+            singer_mid = item.get("custom_info", {}).get("mid")
+            break
+
     if not singer_mid:
         return []
-    
+
     songs_result = await singer.get_songs(mid=singer_mid, page=page, num=num, order=order)
     
     if not songs_result or not isinstance(songs_result, list):
